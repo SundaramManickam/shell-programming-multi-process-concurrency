@@ -1,22 +1,22 @@
 #!/bin/bash
 COUNTER_DIR="./counter_dir"
 COUNTER_FILE="$COUNTER_DIR/serial_counter.txt"
-LOCK_FILE="$COUNTER_DIR/serial_counter.lock"
+LOCK_DIR="$COUNTER_DIR/lockdir"
 
 mkdir -p "$COUNTER_DIR"
-touch "$COUNTER_FILE" "$LOCK_FILE"
-if [ ! -s "$COUNTER_FILE" ]; then
+if [ ! -f "$COUNTER_FILE" ]; then
   echo 0 > "$COUNTER_FILE"
 fi
 
-exec 9>"$LOCK_FILE"
-flock -x 9
+# acquire lock
+while ! mkdir "$LOCK_DIR" 2>/dev/null; do
+  sleep 0.001
+done
 
-current=$(cat "$COUNTER_FILE")
+current=$(<"$COUNTER_FILE")
 next=$((current + 1))
-
-echo "$next" > "$COUNTER_FILE"
 printf "%05d\n" "$next"
+echo "$next" > "$COUNTER_FILE"
 
-flock -u 9
-exec 9>&-
+# release lock
+rmdir "$LOCK_DIR"
