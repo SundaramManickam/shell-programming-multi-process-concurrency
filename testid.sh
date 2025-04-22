@@ -6,13 +6,18 @@ mkdir -p counter_dir
 TOTAL_IDS=5000
 OUTPUT_FILE="generated_ids.txt"
 > "$OUTPUT_FILE"
+MAX_PARALLEL=200
 
 generate_ids() {
   ./genid >> "$OUTPUT_FILE"
 }
-
 for ((i=0; i<TOTAL_IDS; i++)); do
   generate_ids &
+  pids+=($!)
+  if (( ${#pids[@]} >= MAX_PARALLEL )); then
+    wait -n
+    pids=("${pids[@]:1}")
+  fi
 done
 
 wait
