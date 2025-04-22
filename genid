@@ -9,10 +9,14 @@ if [ ! -s "$COUNTER_FILE" ]; then
   echo 0 > "$COUNTER_FILE"
 fi
 
-(
-  flock -x 200
-  current=$(<"$COUNTER_FILE")
-  next=$((current+1))
-  printf "%05d\n" "$next"
-  echo "$next" > "$COUNTER_FILE"
-) 200>"$LOCK_FILE"
+exec 9>"$LOCK_FILE"
+flock -x 9
+
+current=$(cat "$COUNTER_FILE")
+next=$((current + 1))
+
+echo "$next" > "$COUNTER_FILE"
+printf "%05d\n" "$next"
+
+flock -u 9
+exec 9>&-
