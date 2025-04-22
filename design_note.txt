@@ -1,0 +1,13 @@
+Design Note
+
+The genid function uses an atomic mkdir lock to serialize access: each process safely reads, increments, and updates a counter file, ensuring sequential, zero-padded IDs. No external tools are required.
+
+During testing, trying to spawn 5,000 processes at once initially caused system errors (fork: Resource temporarily unavailable). To address this, the test script (testid.sh) introduced throttling, allowing only 200 concurrent jobs at a time and using a small sleep (0.01s) delay to avoid overwhelming the system scheduler.
+
+The final validation compares sorted outputs to an expected list of 5-digit IDs, checking for missing or duplicate entries.
+
+Performance:
+The locking is fast and reliable for single-host workloads. Process throttling and minimal sleep ensure stability without significantly impacting test speed.
+
+Trade-offs:
+Simple, portable, and correct under concurrent load, but the approach is limited by disk I/O and shell process spawning rates for extremely high volumes.
